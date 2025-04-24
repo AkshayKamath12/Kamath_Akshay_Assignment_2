@@ -6,10 +6,12 @@
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
     <script src="Point.js"></script>
     <script src="Triangle.js"></script>
     <script src="Circle.js"></script>
-    <script src="ColoredPoints.js"></script>
+    <script src="Cube.js"></script>
+    <script src="BlockyAnimal.js"></script>
   </head>
 
   <body onload="main()">
@@ -28,16 +30,10 @@
           <button type="button" id="point">Point</button>
           <button type="button" id="triangle">Triangle</button>
           <button type="button" id="circle">Circle</button>
-          <button type="button" id="rayquaza">Rayquaza</button>
-          <button type="button" id="animate">Animate Rayquaza</button>
         </div>
         <div style="display: flex;">
           <p>Red</p>
           <input type="range" min="1" max="100" value="50" class="slider" id="redSlider">
-          <div style="display: flex; margin-left: 60px">
-            <p>Segments</p>
-            <input type="range" min="3" max="40" value="20" class="slider" id="segmentSlider"/>
-          </div>
         </div>
         <div style="display: flex;">
           <p>Green</p>
@@ -49,22 +45,13 @@
         </div>
     
         <div style="display: flex;">
-          <p>Size</p>
-          <input type="range" min="0" max="50" value="5" class="slider" id="sizeSlider"/>
+          <p>Camera Angle</p>
+          <input type="range" min="0" max="90" value="0" class="slider" id="cameraSlider"/>
         </div>
 
         
       </div>
       
-      <img id="rayquaza" src="rayquaza_drawing.jpg" alt="Rayquaza" style="width: 10vw; margin-left: 30vw;"/>
-      <div style="margin-left: 60px;">
-        <p>
-          Name = Akshay Kamath<br/>
-          Email = akkamath@ucsc.edu<br/>
-          Notes to the grader: I used copilot to change the draw triangle function to allow for rotation based on an optional angle parameter. I also referenced the video series provided by the professor.
-
-        </p>
-      </div>
     </div>
     
     
