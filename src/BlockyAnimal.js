@@ -31,7 +31,7 @@ let g_selectedSize = 5;
 let g_selectedType=POINT;
 let g_segments = 20;
 let g_globalAngle = 0.0;
-
+let g_yellowAngle = 45.0;
 function addActionsForHtmlUI(){
   document.getElementById("green").onclick= function() {g_selectedColor = [0.0, 1.0, 0.0, 1.0];}
   document.getElementById("red").onclick= function() {g_selectedColor = [1.0, 0.0, 0.0, 1.0];}
@@ -39,6 +39,8 @@ function addActionsForHtmlUI(){
   document.getElementById("greenSlider").addEventListener('change', function() {g_selectedColor[1] = this.value / 100;});
   document.getElementById("blueSlider").addEventListener('change', function() {g_selectedColor[2] = this.value / 100;});
   document.getElementById("clear").addEventListener('click', function() {g_shapes_list = []; renderAllShapes();})
+  document.getElementById("yellowSlider").addEventListener('mousemove', function() {g_yellowAngle = this.value; renderAllShapes();});
+
   document.getElementById("cameraSlider").addEventListener('mousemove', function() {g_globalAngle = this.value; renderAllShapes();});
 
   document.getElementById('point').addEventListener('click', function() {g_selectedType=POINT});
@@ -57,7 +59,7 @@ function setupWebGL(){
     console.log('Failed to get the rendering context for WebGL');
     return;
   }
-  //gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.DEPTH_TEST);
   //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
@@ -103,26 +105,15 @@ function main() {
 
   connectVariablesToGLSL()
   addActionsForHtmlUI()
-  // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = click;
-  canvas.onmousemove = function(ev){if(ev.buttons == 1) click(ev);}
-  
+  // Register function (event handler) to be called on a mouse press  
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   // Clear <canvas>
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  
   renderAllShapes();
 }
 
-function clickToXY(ev){
-  var x = ev.clientX; // x coordinate of a mouse pointer
-  var y = ev.clientY; // y coordinate of a mouse pointer
-  var rect = ev.target.getBoundingClientRect();
-  x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
-  y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
-  return [x, y];
-}
 
 var g_shapes_list = [];
 /*
@@ -163,26 +154,37 @@ function renderAllShapes(){
   var globalRotateMat = new Matrix4().rotate(g_globalAngle, 0, 1, 0);
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMat.elements);
 
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
-
   //drawTriangle3D([-1.0, 0.0, 0.0, -0.5, -1.0, 0.0,  0.0, 0.0, 0.0]);
   var body = new Cube();
   body.color = [1.0, 0.0, 0.0, 1.0]
-  body.matrix.translate(-0.25, -0.5, 0.0);
-  body.matrix.scale(0.5, 1, -0.5);
+  body.matrix.translate(-0.25, -0.75, 0.0);
+  body.matrix.rotate(-5, 1, 0, 0);
+  body.matrix.scale(0.5, 0.3, 0.5);
   body.render();
 
   var leftArm = new Cube();
   leftArm.color = [1.0, 1.0, 0.0, 1.0]
-  leftArm.matrix.translate(0.7, 0.0, 0.0);
-  leftArm.matrix.rotate(45, 0, 0, 1);
-  leftArm.matrix.scale(0.25, 0.7, 0.5);
+  leftArm.matrix.setTranslate(0, -0.5, 0.0);
+  leftArm.matrix.rotate(-5, 1, 0, 0);
+  leftArm.matrix.rotate(-g_yellowAngle, 0, 0, 1);
+  var preScaledMatrix = new Matrix4(leftArm.matrix);
+  leftArm.matrix.scale(0.2, 0.7, 0.4);
+  leftArm.matrix.translate(-0.5, 0, 0.0);
   leftArm.render();
 
   var box = new Cube();
   box.color = [1.0, 0, 1.0, 1.0]
-  box.matrix.translate(0, 0, -0.5, 0);
+  box.matrix = preScaledMatrix;
+  box.matrix.translate(0, 0.7, 0.0);
+  box.matrix.scale(0.23, 0.2, 0.2);
   box.matrix.rotate(-30, 1, 0, 0);
-  box.matrix.scale(0.5, 0.5, 0.5);
+  box.matrix.translate(-0.5, -0.5, 0, -0.001);
+  /*
+  box.matrix.translate(-0.1, -0.1, 0, 0);
+  box.matrix.rotate(-30, 1, 0, 0);
+  box.matrix.scale(0.2, 0.4, 0.2);
+  */
   box.render();
 }
