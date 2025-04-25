@@ -111,7 +111,7 @@ function main() {
 
   // Clear <canvas>
   
-  renderAllShapes();
+  requestAnimationFrame(tick);
 }
 
 
@@ -145,7 +145,15 @@ function click(ev) {
   point.size = g_selectedSize;
   g_shapes_list.push(point);
   // Clear <canvas>
-  renderAllShapes()
+  
+}
+
+var g_startTime = performance.now()/1000.0;
+var g_seconds = performance.now()/1000.0 - g_startTime;
+function tick(){
+  g_seconds = performance.now()/1000.0 - g_startTime;
+  renderAllShapes();
+  requestAnimationFrame(tick);
 }
 
 function renderAllShapes(){
@@ -168,7 +176,7 @@ function renderAllShapes(){
   leftArm.color = [1.0, 1.0, 0.0, 1.0]
   leftArm.matrix.setTranslate(0, -0.5, 0.0);
   leftArm.matrix.rotate(-5, 1, 0, 0);
-  leftArm.matrix.rotate(-g_yellowAngle, 0, 0, 1);
+  leftArm.matrix.rotate(45 * Math.sin(g_seconds), 0, 0, 1);
   var preScaledMatrix = new Matrix4(leftArm.matrix);
   leftArm.matrix.scale(0.2, 0.7, 0.4);
   leftArm.matrix.translate(-0.5, 0, 0.0);
