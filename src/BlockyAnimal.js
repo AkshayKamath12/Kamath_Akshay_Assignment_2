@@ -32,6 +32,8 @@ let g_selectedType=POINT;
 let g_segments = 20;
 let g_globalAngle = 0.0;
 let g_yellowAngle = 45.0;
+let animate = false;
+
 function addActionsForHtmlUI(){
   document.getElementById("green").onclick= function() {g_selectedColor = [0.0, 1.0, 0.0, 1.0];}
   document.getElementById("red").onclick= function() {g_selectedColor = [1.0, 0.0, 0.0, 1.0];}
@@ -46,7 +48,8 @@ function addActionsForHtmlUI(){
   document.getElementById('point').addEventListener('click', function() {g_selectedType=POINT});
   document.getElementById('triangle').addEventListener('click', function() {g_selectedType=TRIANGLE})
   document.getElementById('circle').addEventListener('click', function() {g_selectedType=CIRCLE})
-
+  document.getElementById('animate').addEventListener('click', function() {animate = true;});
+  document.getElementById('stopAnimate').addEventListener('click', function() {animate = false;});
 }
 
 
@@ -176,7 +179,13 @@ function renderAllShapes(){
   leftArm.color = [1.0, 1.0, 0.0, 1.0]
   leftArm.matrix.setTranslate(0, -0.5, 0.0);
   leftArm.matrix.rotate(-5, 1, 0, 0);
-  leftArm.matrix.rotate(45 * Math.sin(g_seconds), 0, 0, 1);
+  if(animate){
+    leftArm.matrix.rotate(45 * Math.sin(g_seconds), 0, 0, 1);
+  }else{
+    leftArm.matrix.rotate(g_yellowAngle, 0, 0, 1);
+  }
+
+  
   var preScaledMatrix = new Matrix4(leftArm.matrix);
   leftArm.matrix.scale(0.2, 0.7, 0.4);
   leftArm.matrix.translate(-0.5, 0, 0.0);
