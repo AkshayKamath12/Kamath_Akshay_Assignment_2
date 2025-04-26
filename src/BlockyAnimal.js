@@ -31,15 +31,23 @@ let g_selectedSize = 5;
 let g_selectedType=POINT;
 let g_segments = 20;
 let g_globalAngle = 5;
-let g_yellowAngle = 45.0;
+let g_allLegsAngle = 0.0;
+let g_frontLegFootAngle = 30.0;
+let g_globalAngleX = 0; 
+let g_globalAngleY = 0;
 let animate = false;
+let animateFoot = false;
 
 function addActionsForHtmlUI(){
+  addMouseControl();
+  document.getElementById("allLegsSlider").addEventListener('mousemove', function() {g_allLegsAngle = this.value;renderScene();});
+  document.getElementById("frontFootSlider").addEventListener('mousemove', function() {g_frontLegFootAngle = this.value;renderScene();});
 
-  document.getElementById("yellowSlider").addEventListener('mousemove', function() {g_yellowAngle = this.value; renderAllShapes();});
-  document.getElementById("cameraSlider").addEventListener('mousemove', function() {g_globalAngle = this.value; renderAllShapes();});
+  document.getElementById("cameraSlider").addEventListener('mousemove', function() {g_globalAngle = this.value; renderScene();});
   document.getElementById('animate').addEventListener('click', function() {animate = true;});
+  document.getElementById('animateFoot').addEventListener('click', function() {animateFoot = true;});
   document.getElementById('stopAnimate').addEventListener('click', function() {animate = false;});
+  document.getElementById('stopAnimateFoot').addEventListener('click', function() {animateFoot = false;});
 }
 
 
@@ -115,30 +123,35 @@ var g_colors = [];  // The array to store the color of a point
 var g_sizes = [];
 */
 
-function click(ev) {
-  let [x,y] = clickToXY(ev)
-  // Store the coordinates to g_points array
-  /*
-  g_points.push([x, y]);
-  g_colors.push(g_selectedColor.slice());
-  g_sizes.push(g_selectedSize);
-  */
-  let point;
-  if(g_selectedType == POINT){
-    point = new Point();
-  } else if (g_selectedType == TRIANGLE){
-    point = new Triangle();
-  } else{
-    point = new Circle();
-    point.segments = g_segments;
-    console.log(g_segments);
-  }
-  point.position=[x,y];
-  point.color = g_selectedColor.slice();
-  point.size = g_selectedSize;
-  g_shapes_list.push(point);
-  // Clear <canvas>
-  
+function addMouseControl() {
+  let isDragging = false;
+  let lastX = 0, lastY = 0;
+
+  canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      let dx = e.clientX - lastX;
+      let dy = e.clientY - lastY;
+      g_globalAngleX += dy * 0.5; // Adjust sensitivity as needed
+      g_globalAngleY += dx * 0.5;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      renderScene(); // Re-render the scene with updated angles
+    }
+  });
+
+  canvas.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    isDragging = false;
+  });
 }
 
 var g_startTime = performance.now()/1000.0;
@@ -152,21 +165,26 @@ function tick(){
 
 function updateAnimationAngle(){
   if(animate){
-    g_yellowAngle = Math.abs(-45 * Math.sin(g_seconds))+10;
-    console.log(g_yellowAngle);
+    g_allLegsAngle = Math.abs(-45 * Math.sin(3*g_seconds));
+  }
+  if(animateFoot){
+    g_frontLegFootAngle = Math.abs(-45 * Math.sin(3*g_seconds));
   }
 }
 
 function renderScene(){
   
 
-  var globalRotateMat = new Matrix4().rotate(g_globalAngle, 0, 1, 0);
+  var globalRotateMat = new Matrix4()
+    .rotate(g_globalAngleY, 0, 1, 0)
+    .rotate(g_globalAngleX, 1, 0, 0)
+    .rotate(g_globalAngle, 0, 1, 0);; 
   globalRotateMat.translate(-0.2, 0.1, 0);
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMat.elements);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
-  //drawTriangle3D([-1.0, 0.0, 0.0, -0.5, -1.0, 0.0,  0.0, 0.0, 0.0]);
+  
   var head = new Cube();
   head.color = [1, 0.55, 0.63, 1.0]
   head.matrix.translate(-0.5, 0.25, 0);
@@ -320,31 +338,44 @@ function renderScene(){
   var frontLeftLeg = new Cube();
   frontLeftLeg.color = [1, 0.55, 0.63, 1.0]
   frontLeftLeg.matrix = tmpMatrix2;
-  frontLeftLeg.matrix.translate(1, 0.7, 1);
-  frontLeftLeg.matrix.rotate(g_yellowAngle, 0, 0, 1);
-  var frontToeMatrix = new Matrix4(frontLeftLeg.matrix);
-  var frontToeMatrix2 = new Matrix4(frontLeftLeg.matrix);
+  frontLeftLeg.matrix.translate(0.85, 0.7, 1);
+  frontLeftLeg.matrix.rotate(g_allLegsAngle, 0, 0, 1);
+  var frontFootMatrix = new Matrix4(frontLeftLeg.matrix);
   frontLeftLeg.matrix.scale(0.7, 0.4, 0.3);
   frontLeftLeg.render();
+
+  var frontFoot = new Cube();
+  frontFoot.color = [1, 0.55, 0.63, 1.0]
+  frontFoot.matrix = frontFootMatrix;
+  frontFoot.matrix.translate(0.5, 0, 0.001);
+  frontFoot.matrix.rotate(g_frontLegFootAngle, 0, 1, 0);
+  var frontToeMatrix = new Matrix4(frontFoot.matrix);
+  var frontToeMatrix2 = new Matrix4(frontFoot.matrix);
+  frontFoot.matrix.scale(0.2, 0.4, 0.3);
+  frontFoot.render();
+
+  
+  
 
   var frontToe = new Cube();
   frontToe.color = [0.52, 0.29, 0, 1.0]
   frontToe.matrix = frontToeMatrix;
-  frontToe.matrix.translate(0.6, 0.299, -0.001);
+  frontToe.matrix.translate(0.099, 0.299, -0.01);
   frontToe.matrix.scale(0.1, 0.1, 0.1);
   frontToe.render();
 
   var frontToe2 = new Cube();
   frontToe2.color = [0.52, 0.29, 0, 1.0]
   frontToe2.matrix = frontToeMatrix2;
-  frontToe2.matrix.translate(0.6, 0.001, -0.01);
+  frontToe2.matrix.translate(0.099, 0.001, -0.01);
   frontToe2.matrix.scale(0.1, 0.1, 0.1);
   frontToe2.render();
 
   var frontRightLeg = new Cube();
   frontRightLeg.color = [1, 0.55, 0.63, 1.0]
   frontRightLeg.matrix = tmpMatrix3;
-  frontRightLeg.matrix.translate(1, -0.1, 1.1);
+  frontRightLeg.matrix.translate(0.85, -0.1, 1);
+  frontRightLeg.matrix.rotate(-g_allLegsAngle, 0, 0, 1);
   var frontToeMatrix3 = new Matrix4(frontRightLeg.matrix);
   var frontToeMatrix4 = new Matrix4(frontRightLeg.matrix);
   frontRightLeg.matrix.scale(0.7, 0.4, 0.3);
@@ -353,21 +384,22 @@ function renderScene(){
   var frontToe3 = new Cube();
   frontToe3.color = [0.52, 0.29, 0, 1.0]
   frontToe3.matrix = frontToeMatrix3;
-  frontToe3.matrix.translate(0.6, 0.299, -0.001);
+  frontToe3.matrix.translate(0.599, 0.299, -0.001);
   frontToe3.matrix.scale(0.1, 0.1, 0.1);
   frontToe3.render();
 
   var frontToe4 = new Cube();
   frontToe4.color = [0.52, 0.29, 0, 1.0]
   frontToe4.matrix = frontToeMatrix4;
-  frontToe4.matrix.translate(0.6, 0.001, -0.01);
+  frontToe4.matrix.translate(0.599, 0.001, -0.01);
   frontToe4.matrix.scale(0.1, 0.1, 0.1);
   frontToe4.render();
 
   var backRightLeg = new Cube();
   backRightLeg.color = [1, 0.55, 0.63, 1.0]
   backRightLeg.matrix = tmpMatrix4;
-  backRightLeg.matrix.translate(1, -0.1, 2);
+  backRightLeg.matrix.translate(0.85, -0.1, 2);
+  backRightLeg.matrix.rotate(-g_allLegsAngle, 0, 0, 1);
   var backToeMatrix1 = new Matrix4(backRightLeg.matrix);
   var backToeMatrix2 = new Matrix4(backRightLeg.matrix);
   backRightLeg.matrix.scale(0.7, 0.4, 0.3);
@@ -376,21 +408,22 @@ function renderScene(){
   var backToe1 = new Cube();
   backToe1.color = [0.52, 0.29, 0, 1.0]
   backToe1.matrix = backToeMatrix1;
-  backToe1.matrix.translate(0.6, 0.299, -0.001);
+  backToe1.matrix.translate(0.599, 0.299, -0.001);
   backToe1.matrix.scale(0.1, 0.1, 0.1);
   backToe1.render();
 
   var backToe2 = new Cube();
   backToe2.color = [0.52, 0.29, 0, 1.0]
   backToe2.matrix = backToeMatrix2;
-  backToe2.matrix.translate(0.6, 0.001, -0.01);
+  backToe2.matrix.translate(0.599, 0.001, -0.01);
   backToe2.matrix.scale(0.1, 0.1, 0.1);
   backToe2.render();
 
   var backLeftLeg = new Cube();
   backLeftLeg.color = [1, 0.55, 0.63, 1.0]
   backLeftLeg.matrix = tmpMatrix5;
-  backLeftLeg.matrix.translate(1, 0.7, 2);
+  backLeftLeg.matrix.translate(0.85, 0.7, 2);
+  backLeftLeg.matrix.rotate(g_allLegsAngle, 0, 0, 1);
   var backToeMatrix3 = new Matrix4(backLeftLeg.matrix);
   var backToeMatrix4 = new Matrix4(backLeftLeg.matrix);
   backLeftLeg.matrix.scale(0.7, 0.4, 0.3);
@@ -399,45 +432,14 @@ function renderScene(){
   var backToe3 = new Cube();
   backToe3.color = [0.52, 0.29, 0, 1.0]
   backToe3.matrix = backToeMatrix3;
-  backToe3.matrix.translate(0.6, 0.299, -0.001);
+  backToe3.matrix.translate(0.599, 0.299, -0.001);
   backToe3.matrix.scale(0.1, 0.1, 0.1);
   backToe3.render();
 
   var backToe4 = new Cube();
   backToe4.color = [0.52, 0.29, 0, 1.0]
   backToe4.matrix = backToeMatrix4;
-  backToe4.matrix.translate(0.6, 0.001, -0.01);
+  backToe4.matrix.translate(0.599, 0.001, -0.01);
   backToe4.matrix.scale(0.1, 0.1, 0.1);
   backToe4.render();
-
-  /*
-  var leftArm = new Cube();
-  leftArm.color = [1.0, 0.75, 0.89, 1.0]
-  leftArm.matrix = tmpMatrix;
-  leftArm.matrix.setTranslate(0.15, 0, 0.1);
-  leftArm.matrix.scale(1, 0.7, 0.6);
-  leftArm.matrix.rotate(-90, 0, 0, 1);
-  leftArm.matrix.rotate(g_yellowAngle, 0, 0, 1);
-  
-
-  
-  var preScaledMatrix = new Matrix4(leftArm.matrix);
-  leftArm.matrix.scale(0.2, 0.7, 0.4);
-  leftArm.matrix.translate(-0.5, 0, 0.0);
-  leftArm.render();
-
-  var box = new Cube();
-  box.color = [1.0, 0, 1.0, 1.0]
-  box.matrix = preScaledMatrix;
-  box.matrix.translate(0, 0.7, 0.0);
-  box.matrix.scale(0.23, 0.2, 0.2);
-  box.matrix.rotate(-30, 1, 0, 0);
-  box.matrix.translate(-0.5, -0.5, 0, -0.001);
-
-  box.matrix.translate(-0.1, -0.1, 0, 0);
-  box.matrix.rotate(-30, 1, 0, 0);
-  box.matrix.scale(0.2, 0.4, 0.2);
-
-  box.render();
-  */
 }
