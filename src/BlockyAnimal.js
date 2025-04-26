@@ -30,7 +30,7 @@ let g_selectedColor=[1.0, 0.0, 0.0, 1.0]
 let g_selectedSize = 5;
 let g_selectedType=POINT;
 let g_segments = 20;
-let g_globalAngle = 0.0;
+let g_globalAngle = 5;
 let g_yellowAngle = 45.0;
 let animate = false;
 
@@ -160,6 +160,7 @@ function renderScene(){
   
 
   var globalRotateMat = new Matrix4().rotate(g_globalAngle, 0, 1, 0);
+  globalRotateMat.translate(-0.2, 0.1, 0);
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMat.elements);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -172,15 +173,104 @@ function renderScene(){
   head.matrix.rotate(-20, 1, 0, 0);
   head.matrix.rotate(-10, 0, 1, 0);
   var tmpMatrix = new Matrix4(head.matrix);
+  var noseMatrix = new Matrix4(head.matrix);
+  var eyeMatrix = new Matrix4(head.matrix);
+  var eyeMatrix2 = new Matrix4(head.matrix);
+  var pupilMatrix = new Matrix4(head.matrix);
+  var pupilMatrix2 = new Matrix4(head.matrix);
   head.matrix.scale(0.5, 0.5, 0.5);
   head.render();
+
+  var nose = new Cube();
+  nose.color = [1, 0.55, 0.63, 1.0]
+  nose.matrix = noseMatrix;
+  nose.matrix.translate(0.2, 0.15, -0.09);
+  var nostrilMatrix = new Matrix4(nose.matrix);
+  var nostrilMatrix2 = new Matrix4(nose.matrix);
+  nose.matrix.scale(0.2, 0.24, 0.2);
+  nose.render();
+
+  var nostril = new Cube();
+  nostril.color = [0.52, 0.29, 0, 1.0]
+  nostril.matrix = nostrilMatrix;
+  nostril.matrix.translate(0.066, 0.159, -0.015);
+  nostril.matrix.scale(0.08, 0.08, 0.05);
+  nostril.render();
+
+  var nostril2 = new Cube();
+  nostril2.color = [0.52, 0.29, 0, 1.0]
+  nostril2.matrix = nostrilMatrix2;
+  nostril2.matrix.translate(0.066, 0.0001, -0.015);
+  nostril2.matrix.scale(0.08, 0.08, 0.05);
+  nostril2.render();
+
+  var eye = new Cube();
+  eye.color = [1, 1, 1, 1.0]
+  eye.matrix = eyeMatrix;
+  eye.matrix.translate(0.1, 0.38, -0.01);
+  eye.matrix.scale(0.1, 0.115, 0.1);
+  eye.render();
+
+  var pupil = new Cube();
+  pupil.color = [0, 0, 0, 1.0]
+  pupil.matrix = pupilMatrix;
+  pupil.matrix.translate(0.1, 0.44, -0.02);
+  pupil.matrix.scale(0.1, 0.0575, 0.1);
+  pupil.render();
+
+  var eye2 = new Cube();
+  eye2.color = [1, 1, 1, 1.0]
+  eye2.matrix = eyeMatrix2;
+  eye2.matrix.translate(0.1, 0.001, -0.02);
+  eye2.matrix.scale(0.1, 0.115, 0.1);
+  eye2.render();
+
+  var pupil2 = new Cube();
+  pupil2.color = [0, 0, 0, 1.0]
+  pupil2.matrix = pupilMatrix2;
+  pupil2.matrix.translate(0.1, 0.0001, -0.04);
+  pupil2.matrix.scale(0.1, 0.0575, 0.1);
+  pupil2.render();
+
 
   var body = new Cube();
   body.color = [1, 0.55, 0.63, 1.0]
   body.matrix = tmpMatrix;
   body.matrix.translate(0.1, -0.1, 0.5);
+  var tmpMatrix2 = new Matrix4(head.matrix);
+  var tmpMatrix3 = new Matrix4(head.matrix);
+  var tmpMatrix4 = new Matrix4(head.matrix);
+  var tmpMatrix5 = new Matrix4(head.matrix);
   body.matrix.scale(0.5, 0.7, 0.7);
   body.render();
+
+  var frontLeftLeg = new Cube();
+  frontLeftLeg.color = [1, 0.55, 0.63, 1.0]
+  frontLeftLeg.matrix = tmpMatrix2;
+  frontLeftLeg.matrix.translate(1, 0.7, 1.1);
+  frontLeftLeg.matrix.scale(0.7, 0.4, 0.3);
+  frontLeftLeg.render();
+
+  var frontRightLeg = new Cube();
+  frontRightLeg.color = [1, 0.55, 0.63, 1.0]
+  frontRightLeg.matrix = tmpMatrix3;
+  frontRightLeg.matrix.translate(1, -0.1, 1.1);
+  frontRightLeg.matrix.scale(0.7, 0.4, 0.3);
+  frontRightLeg.render();
+
+  var backRightLeg = new Cube();
+  backRightLeg.color = [1, 0.55, 0.63, 1.0]
+  backRightLeg.matrix = tmpMatrix4;
+  backRightLeg.matrix.translate(1, -0.1, 2);
+  backRightLeg.matrix.scale(0.7, 0.4, 0.3);
+  backRightLeg.render();
+
+  var backLeftLeg = new Cube();
+  backLeftLeg.color = [1, 0.55, 0.63, 1.0]
+  backLeftLeg.matrix = tmpMatrix5;
+  backLeftLeg.matrix.translate(1, 0.7, 2);
+  backLeftLeg.matrix.scale(0.7, 0.4, 0.3);
+  backLeftLeg.render();
 
   /*
   var leftArm = new Cube();
