@@ -32,11 +32,17 @@ let g_selectedType=POINT;
 let g_segments = 20;
 let g_globalAngle = 5;
 let g_allLegsAngle = 0.0;
-let g_frontLegFootAngle = 30.0;
+let g_frontLegFootAngle = 0.0;
 let g_globalAngleX = 0; 
 let g_globalAngleY = 0;
 let animate = false;
 let animateFoot = false;
+let gemsAnimate = false;
+let gemsAnimateStartTime = 0;
+let gemsAnimateTime = 0;
+let gemsColor1 = [0.0, 1.0, 0.0, 1.0];
+let gemsColor2 = [0.0, 0.0, 1.0, 1.0];
+let gemsColor3 = [1.0, 0.0, 0.0, 1.0];
 
 function addActionsForHtmlUI(){
   addMouseControl();
@@ -48,6 +54,12 @@ function addActionsForHtmlUI(){
   document.getElementById('animateFoot').addEventListener('click', function() {animateFoot = true;});
   document.getElementById('stopAnimate').addEventListener('click', function() {animate = false;});
   document.getElementById('stopAnimateFoot').addEventListener('click', function() {animateFoot = false;});
+  canvas.addEventListener('mousedown', (e) => {
+  if (e.shiftKey) {
+    gemsAnimate = true;
+    gemsAnimateStartTime = performance.now() / 1000.0;
+  }
+});
 }
 
 
@@ -154,21 +166,43 @@ function addMouseControl() {
   });
 }
 
-var g_startTime = performance.now()/1000.0;
-var g_seconds = performance.now()/1000.0 - g_startTime;
+var g_startTime = performance.now() / 1000.0;
+var g_seconds = performance.now() / 1000.0 - g_startTime;
+var g_endTime = performance.now();
+var g_lastFps = g_endTime; 
+var g_fps = 0;
+
 function tick(){
-  g_seconds = performance.now()/1000.0 - g_startTime;
-  updateAnimationAngle();
+  var now = performance.now();
+  if(gemsAnimate && (now / 1000.0 - gemsAnimateStartTime) >= 5.0){
+    gemsAnimate = false;
+  }
+  var changed = now - g_lastFps;
+  g_lastFps = now;
+  g_fps = 1000.0 / changed;
+  g_seconds = now / 1000.0 - g_startTime;
+
+  if(now - g_startTime >= 1000.0){
+    document.getElementById("fps").innerText = g_fps.toFixed(1) + " fps";
+    g_lastFps = now;
+  }
+  
+  updateAnimationInfo();
   renderScene();
   requestAnimationFrame(tick);
 }
 
-function updateAnimationAngle(){
+function updateAnimationInfo(){
   if(animate){
     g_allLegsAngle = Math.abs(-45 * Math.sin(3*g_seconds));
   }
   if(animateFoot){
     g_frontLegFootAngle = Math.abs(-45 * Math.sin(3*g_seconds));
+  }
+  if(gemsAnimate){
+    gemsColor1 = [Math.abs(Math.sin(g_seconds)), Math.abs(Math.cos(g_seconds)), 0.0, 1.0];
+    gemsColor2 = [Math.abs(Math.sin(g_seconds + Math.PI/3)), Math.abs(Math.cos(g_seconds + Math.PI/3)), 0.0, 1.0];
+    gemsColor3 = [Math.abs(Math.sin(g_seconds + Math.PI*2/3)), Math.abs(Math.cos(g_seconds + Math.PI*2/3)), 0.0, 1.0];
   }
 }
 
@@ -276,8 +310,37 @@ function renderScene(){
   var crownMiddleMatrix2 = new Matrix4(crown.matrix);
   var crownMiddleMatrix3 = new Matrix4(crown.matrix);
   var crownMiddleMatrix4 = new Matrix4(crown.matrix);
+  var crownCenterMatrix = new Matrix4(crown.matrix);
+  var crownGemMatrix = new Matrix4(crown.matrix);
+  var crownGemMatrix2 = new Matrix4(crown.matrix);
+  var crownGemMatrix3 = new Matrix4(crown.matrix);
   crown.matrix.scale(0.1, 0.53, 0.51);
   crown.render();
+
+  var crownGem = new Cube();
+  crownGem.color = gemsColor1
+  crownGem.matrix = crownGemMatrix;
+  crownGem.matrix.translate(0.01, 0.225, -0.01);
+  crownGem.matrix.scale(0.05, 0.05, 0.1);
+
+  var crownGem2 = new Cube();
+  crownGem2.color = gemsColor2
+  crownGem2.matrix = crownGemMatrix2;
+  crownGem2.matrix.translate(0.01, 0.45, -0.01);
+  crownGem2.matrix.scale(0.05, 0.05, 0.1);
+
+  var crownGem3 = new Cube();
+  crownGem3.color = gemsColor3
+  crownGem3.matrix = crownGemMatrix3;
+  crownGem3.matrix.translate(0.01, 0.02, -0.01);
+  crownGem3.matrix.scale(0.05, 0.05, 0.1);
+  
+
+  if(gemsAnimate){
+    crownGem.render();
+    crownGem2.render();
+    crownGem3.render();
+  }
 
   var crownCorner = new Cube();
   crownCorner.color = [1, 0.84, 0, 1.0]
@@ -334,6 +397,14 @@ function renderScene(){
   crownMiddle4.matrix.translate(-0.08, 0, 0.2);
   crownMiddle4.matrix.scale(0.1, 0.1, 0.1);
   crownMiddle4.render();
+
+  var crownCenter = new Cone();
+  crownCenter.color = [1, 0.84, 0, 1.0]
+  crownCenter.matrix = crownCenterMatrix;
+  crownCenter.matrix.translate(-0.02, 0.25, 0.25);
+  crownCenter.matrix.rotate(270, 0, 1, 0);
+  crownCenter.matrix.scale(0.1, 0.1, 0.1);
+  crownCenter.render();
 
   var frontLeftLeg = new Cube();
   frontLeftLeg.color = [1, 0.55, 0.63, 1.0]
