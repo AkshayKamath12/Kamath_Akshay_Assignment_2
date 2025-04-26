@@ -35,19 +35,9 @@ let g_yellowAngle = 45.0;
 let animate = false;
 
 function addActionsForHtmlUI(){
-  document.getElementById("green").onclick= function() {g_selectedColor = [0.0, 1.0, 0.0, 1.0];}
-  document.getElementById("red").onclick= function() {g_selectedColor = [1.0, 0.0, 0.0, 1.0];}
-  document.getElementById("redSlider").addEventListener('change', function() {g_selectedColor[0] = this.value / 100;});
-  document.getElementById("greenSlider").addEventListener('change', function() {g_selectedColor[1] = this.value / 100;});
-  document.getElementById("blueSlider").addEventListener('change', function() {g_selectedColor[2] = this.value / 100;});
-  document.getElementById("clear").addEventListener('click', function() {g_shapes_list = []; renderAllShapes();})
+
   document.getElementById("yellowSlider").addEventListener('mousemove', function() {g_yellowAngle = this.value; renderAllShapes();});
-
   document.getElementById("cameraSlider").addEventListener('mousemove', function() {g_globalAngle = this.value; renderAllShapes();});
-
-  document.getElementById('point').addEventListener('click', function() {g_selectedType=POINT});
-  document.getElementById('triangle').addEventListener('click', function() {g_selectedType=TRIANGLE})
-  document.getElementById('circle').addEventListener('click', function() {g_selectedType=CIRCLE})
   document.getElementById('animate').addEventListener('click', function() {animate = true;});
   document.getElementById('stopAnimate').addEventListener('click', function() {animate = false;});
 }
@@ -155,11 +145,18 @@ var g_startTime = performance.now()/1000.0;
 var g_seconds = performance.now()/1000.0 - g_startTime;
 function tick(){
   g_seconds = performance.now()/1000.0 - g_startTime;
-  renderAllShapes();
+  updateAnimationAngle();
+  renderScene();
   requestAnimationFrame(tick);
 }
 
-function renderAllShapes(){
+function updateAnimationAngle(){
+  if(animate){
+    g_yellowAngle = 45 * Math.sin(g_seconds);
+  }
+}
+
+function renderScene(){
   
 
   var globalRotateMat = new Matrix4().rotate(g_globalAngle, 0, 1, 0);
@@ -168,22 +165,32 @@ function renderAllShapes(){
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
   //drawTriangle3D([-1.0, 0.0, 0.0, -0.5, -1.0, 0.0,  0.0, 0.0, 0.0]);
+  var head = new Cube();
+  head.color = [1, 0.55, 0.63, 1.0]
+  head.matrix.translate(-0.5, 0.25, 0);
+  head.matrix.rotate(-90, 0, 0, 1);
+  head.matrix.rotate(-20, 1, 0, 0);
+  head.matrix.rotate(-10, 0, 1, 0);
+  var tmpMatrix = new Matrix4(head.matrix);
+  head.matrix.scale(0.5, 0.5, 0.5);
+  head.render();
+
   var body = new Cube();
-  body.color = [1.0, 0.0, 0.0, 1.0]
-  body.matrix.translate(-0.25, -0.75, 0.0);
-  body.matrix.rotate(-5, 1, 0, 0);
-  body.matrix.scale(0.5, 0.3, 0.5);
+  body.color = [1, 0.55, 0.63, 1.0]
+  body.matrix = tmpMatrix;
+  body.matrix.translate(0.1, -0.1, 0.5);
+  body.matrix.scale(0.5, 0.7, 0.7);
   body.render();
 
+  /*
   var leftArm = new Cube();
-  leftArm.color = [1.0, 1.0, 0.0, 1.0]
-  leftArm.matrix.setTranslate(0, -0.5, 0.0);
-  leftArm.matrix.rotate(-5, 1, 0, 0);
-  if(animate){
-    leftArm.matrix.rotate(45 * Math.sin(g_seconds), 0, 0, 1);
-  }else{
-    leftArm.matrix.rotate(g_yellowAngle, 0, 0, 1);
-  }
+  leftArm.color = [1.0, 0.75, 0.89, 1.0]
+  leftArm.matrix = tmpMatrix;
+  leftArm.matrix.setTranslate(0.15, 0, 0.1);
+  leftArm.matrix.scale(1, 0.7, 0.6);
+  leftArm.matrix.rotate(-90, 0, 0, 1);
+  leftArm.matrix.rotate(g_yellowAngle, 0, 0, 1);
+  
 
   
   var preScaledMatrix = new Matrix4(leftArm.matrix);
@@ -198,10 +205,11 @@ function renderAllShapes(){
   box.matrix.scale(0.23, 0.2, 0.2);
   box.matrix.rotate(-30, 1, 0, 0);
   box.matrix.translate(-0.5, -0.5, 0, -0.001);
-  /*
+
   box.matrix.translate(-0.1, -0.1, 0, 0);
   box.matrix.rotate(-30, 1, 0, 0);
   box.matrix.scale(0.2, 0.4, 0.2);
-  */
+
   box.render();
+  */
 }
