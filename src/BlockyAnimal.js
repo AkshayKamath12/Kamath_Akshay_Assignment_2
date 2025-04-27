@@ -33,32 +33,64 @@ let g_segments = 20;
 let g_globalAngle = 5;
 let g_allLegsAngle = 0.0;
 let g_frontLegFootAngle = 0.0;
+let g_frontToeAngle = 0.0;
 let g_globalAngleX = 0; 
 let g_globalAngleY = 0;
 let animate = false;
 let animateFoot = false;
 let gemsAnimate = false;
+let animateToes = false;
 let gemsAnimateStartTime = 0;
 let gemsAnimateTime = 0;
+let isDragging = false;
+let lastX = 0, lastY = 0;
+
 let gemsColor1 = [0.0, 1.0, 0.0, 1.0];
 let gemsColor2 = [0.0, 0.0, 1.0, 1.0];
 let gemsColor3 = [1.0, 0.0, 0.0, 1.0];
 
 function addActionsForHtmlUI(){
-  addMouseControl();
+
   document.getElementById("allLegsSlider").addEventListener('mousemove', function() {g_allLegsAngle = this.value;renderScene();});
   document.getElementById("frontFootSlider").addEventListener('mousemove', function() {g_frontLegFootAngle = this.value;renderScene();});
-
+  document.getElementById("toeSlider").addEventListener('mousemove', function() {g_frontToeAngle = this.value;renderScene();});
   document.getElementById("cameraSlider").addEventListener('mousemove', function() {g_globalAngle = this.value; renderScene();});
   document.getElementById('animate').addEventListener('click', function() {animate = true;});
   document.getElementById('animateFoot').addEventListener('click', function() {animateFoot = true;});
+  document.getElementById('animateToe').addEventListener('click', function() {animateToes = true;});
   document.getElementById('stopAnimate').addEventListener('click', function() {animate = false;});
   document.getElementById('stopAnimateFoot').addEventListener('click', function() {animateFoot = false;});
+  document.getElementById('stopAnimateToe').addEventListener('click', function() {animateToes = false;});
   canvas.addEventListener('mousedown', (e) => {
   if (e.shiftKey) {
     gemsAnimate = true;
     gemsAnimateStartTime = performance.now() / 1000.0;
   }
+  canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      let dx = e.clientX - lastX;
+      let dy = e.clientY - lastY;
+      g_globalAngleX += dy * 0.5; // Adjust sensitivity as needed
+      g_globalAngleY += dx * 0.5;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      renderScene(); // Re-render the scene with updated angles
+    }
+  });
+
+  canvas.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    isDragging = false;
+  });
 });
 }
 
@@ -136,34 +168,9 @@ var g_sizes = [];
 */
 
 function addMouseControl() {
-  let isDragging = false;
-  let lastX = 0, lastY = 0;
+  
 
-  canvas.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
-  });
-
-  canvas.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      let dx = e.clientX - lastX;
-      let dy = e.clientY - lastY;
-      g_globalAngleX += dy * 0.5; // Adjust sensitivity as needed
-      g_globalAngleY += dx * 0.5;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      renderScene(); // Re-render the scene with updated angles
-    }
-  });
-
-  canvas.addEventListener('mouseup', () => {
-    isDragging = false;
-  });
-
-  canvas.addEventListener('mouseleave', () => {
-    isDragging = false;
-  });
+  
 }
 
 var g_startTime = performance.now() / 1000.0;
@@ -199,6 +206,10 @@ function updateAnimationInfo(){
   if(animateFoot){
     g_frontLegFootAngle = Math.abs(-45 * Math.sin(3*g_seconds));
   }
+  if(animateToes){
+    g_frontToeAngle = Math.abs(-45 * Math.sin(3*g_seconds));
+  }
+
   if(gemsAnimate){
     gemsColor1 = [Math.abs(Math.sin(g_seconds)), Math.abs(Math.cos(g_seconds)), 0.0, 1.0];
     gemsColor2 = [Math.abs(Math.sin(g_seconds + Math.PI/3)), Math.abs(Math.cos(g_seconds + Math.PI/3)), 0.0, 1.0];
@@ -401,7 +412,7 @@ function renderScene(){
   var crownCenter = new Cone();
   crownCenter.color = [1, 0.84, 0, 1.0]
   crownCenter.matrix = crownCenterMatrix;
-  crownCenter.matrix.translate(-0.02, 0.25, 0.25);
+  crownCenter.matrix.translate(0, 0.25, 0.25);
   crownCenter.matrix.rotate(270, 0, 1, 0);
   crownCenter.matrix.scale(0.1, 0.1, 0.1);
   crownCenter.render();
@@ -425,14 +436,12 @@ function renderScene(){
   frontFoot.matrix.scale(0.2, 0.4, 0.3);
   frontFoot.render();
 
-  
-  
-
   var frontToe = new Cube();
   frontToe.color = [0.52, 0.29, 0, 1.0]
   frontToe.matrix = frontToeMatrix;
   frontToe.matrix.translate(0.099, 0.299, -0.01);
   frontToe.matrix.scale(0.1, 0.1, 0.1);
+  frontToe.matrix.rotate(g_frontToeAngle, 0, 1, 0);
   frontToe.render();
 
   var frontToe2 = new Cube();
@@ -440,6 +449,7 @@ function renderScene(){
   frontToe2.matrix = frontToeMatrix2;
   frontToe2.matrix.translate(0.099, 0.001, -0.01);
   frontToe2.matrix.scale(0.1, 0.1, 0.1);
+  frontToe2.matrix.rotate(g_frontToeAngle, 0, 1, 0);
   frontToe2.render();
 
   var frontRightLeg = new Cube();
